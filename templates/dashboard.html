@@ -1,0 +1,110 @@
+{% extends 'base.html' %}
+{% block title %}Dashboard — QuizMaster{% endblock %}
+
+{% block content %}
+<div class="container">
+
+  <!-- Page header -->
+  <div class="page-header fade-in">
+    <h1>Quiz Dashboard</h1>
+    <p>Welcome back, <strong style="color:var(--accent-light)">{{ session.username }}</strong>! Pick a quiz and challenge yourself.</p>
+  </div>
+
+  <!-- Stats bar -->
+  <div class="stats-grid mb-3">
+    <div class="stat-card">
+      <div class="stat-icon">📚</div>
+      <div class="stat-number">{{ quizzes|length }}</div>
+      <div class="stat-label">Available Quizzes</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon">✅</div>
+      <div class="stat-number">{{ attempted_ids|length }}</div>
+      <div class="stat-label">Completed</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon">⏳</div>
+      <div class="stat-number">{{ quizzes|length - attempted_ids|length }}</div>
+      <div class="stat-label">Remaining</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon">🏆</div>
+      <div class="stat-number">
+        <a href="{{ url_for('leaderboard') }}" style="color:var(--accent-light);font-size:1.1rem">View →</a>
+      </div>
+      <div class="stat-label">Leaderboard</div>
+    </div>
+  </div>
+
+  <!-- Custom Quiz Generator -->
+  <div class="card fade-in mb-3" style="animation-delay:0.05s;">
+    <h2 style="font-family:'Space Grotesk',sans-serif; font-size:1.3rem; margin-bottom:12px;">✨ AI Custom Quiz Generator</h2>
+    <p style="color:var(--text-muted); font-size:0.9rem; margin-bottom:20px;">Want to test your knowledge on a specific topic? Our AI will generate a custom quiz for you instantly.</p>
+    
+    <form method="POST" action="{{ url_for('generate_quiz') }}" style="display:flex; gap:16px; flex-wrap:wrap; align-items:flex-end;">
+      <div class="form-group" style="margin-bottom:0; flex:2; min-width:200px;">
+        <label class="form-label" for="topic">Topic</label>
+        <input type="text" id="topic" name="topic" class="form-control" placeholder="e.g. World War II, Quantum Physics, Harry Potter" required>
+      </div>
+      <div class="form-group" style="margin-bottom:0; flex:1; min-width:120px;">
+        <label class="form-label" for="num_questions">Questions</label>
+        <input type="number" id="num_questions" name="num_questions" class="form-control" value="5" min="3" max="25" required>
+      </div>
+      <button type="submit" class="btn btn-primary" onclick="this.innerHTML='⏳ Generating...';">✨ Generate & Start</button>
+    </form>
+  </div>
+
+  <!-- Quiz grid -->
+  {% if quizzes %}
+  <div class="quiz-grid">
+    {% for quiz in quizzes %}
+    <div class="quiz-card">
+      <div class="quiz-card-header">
+        <h3>{{ quiz.title }}</h3>
+        {% if quiz.id in attempted_ids %}
+          <span class="quiz-card-badge badge-attempted">✅ Done</span>
+        {% else %}
+          <span class="quiz-card-badge badge-new">🆕 New</span>
+        {% endif %}
+      </div>
+
+      <p>{{ quiz.description }}</p>
+
+      <div class="quiz-meta">
+        <div class="quiz-meta-item">
+          <span class="icon">❓</span>
+          <span>{{ quiz.question_count() }} questions</span>
+        </div>
+        {% if quiz.time_limit > 0 %}
+        <div class="quiz-meta-item">
+          <span class="icon">⏱️</span>
+          <span>{{ (quiz.time_limit // 60) }} min</span>
+        </div>
+        {% else %}
+        <div class="quiz-meta-item">
+          <span class="icon">∞</span>
+          <span>No time limit</span>
+        </div>
+        {% endif %}
+      </div>
+
+      <a href="{{ url_for('quiz', quiz_id=quiz.id) }}" class="btn btn-primary btn-sm" id="start-quiz-{{ quiz.id }}">
+        {% if quiz.id in attempted_ids %}🔄 Retake Quiz{% else %}▶️ Start Quiz{% endif %}
+      </a>
+    </div>
+    {% endfor %}
+  </div>
+
+  {% else %}
+  <div class="empty-state">
+    <div class="empty-icon">📭</div>
+    <h3>No quizzes available yet</h3>
+    <p>Check back soon — quizzes are being added!</p>
+    {% if session.is_admin %}
+    <a href="{{ url_for('create_quiz') }}" class="btn btn-primary mt-3">+ Create First Quiz</a>
+    {% endif %}
+  </div>
+  {% endif %}
+
+</div>
+{% endblock %}

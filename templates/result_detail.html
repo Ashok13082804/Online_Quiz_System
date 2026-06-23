@@ -1,0 +1,94 @@
+{% extends 'base.html' %}
+{% block title %}Result Detail — QuizMaster{% endblock %}
+
+{% block content %}
+<div class="container">
+
+  <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:32px; flex-wrap:wrap; gap:12px;" class="fade-in no-print">
+    <div>
+      <h1 style="font-family:'Space Grotesk',sans-serif; font-size:1.6rem; font-weight:700;">📋 Detailed Result</h1>
+      <p style="color:var(--text-muted); margin-top:6px;">{{ quiz.title }} — {{ result.timestamp.strftime('%d %B %Y, %H:%M') }}</p>
+    </div>
+    <div style="display:flex; gap:12px;">
+      <button onclick="window.print()" class="btn btn-outline">📥 Download PDF</button>
+      <a href="{{ url_for('history') }}" class="btn btn-secondary" id="back-history-btn">← Back to History</a>
+    </div>
+  </div>
+
+  <!-- Score summary -->
+  <div class="card fade-in" style="display:flex; align-items:center; justify-content:space-around; flex-wrap:wrap; gap:24px; margin-bottom:28px; padding:32px; text-align:center;">
+    <div>
+      <div style="font-family:'Space Grotesk',sans-serif; font-size:3rem; font-weight:700; color:{% if result.score >= 80 %}var(--success){% elif result.score >= 50 %}var(--warning){% else %}var(--danger){% endif %};">
+        {{ result.score }}%
+      </div>
+      <div style="color:var(--text-muted); font-size:0.85rem;">Final Score</div>
+    </div>
+    <div>
+      <div style="font-family:'Space Grotesk',sans-serif; font-size:2rem; font-weight:700; color:var(--success);">{{ result.correct_answers }}</div>
+      <div style="color:var(--text-muted); font-size:0.85rem;">Correct</div>
+    </div>
+    <div>
+      <div style="font-family:'Space Grotesk',sans-serif; font-size:2rem; font-weight:700; color:var(--danger);">{{ result.total_questions - result.correct_answers }}</div>
+      <div style="color:var(--text-muted); font-size:0.85rem;">Incorrect</div>
+    </div>
+    <div>
+      <div style="font-family:'Space Grotesk',sans-serif; font-size:2rem; font-weight:700; color:var(--accent-light);">{{ result.total_questions }}</div>
+      <div style="color:var(--text-muted); font-size:0.85rem;">Total</div>
+    </div>
+    {% if result.time_taken %}
+    <div>
+      <div style="font-family:'Space Grotesk',sans-serif; font-size:1.5rem; font-weight:700; color:var(--warning);">{{ result.time_taken // 60 }}m {{ result.time_taken % 60 }}s</div>
+      <div style="color:var(--text-muted); font-size:0.85rem;">Time Taken</div>
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- Detailed answers -->
+  <div class="card fade-in" style="animation-delay:0.2s;">
+    <h2 style="font-family:'Space Grotesk',sans-serif; font-size:1.2rem; margin-bottom:24px;">📝 Full Answer Review</h2>
+
+    {% for qid, data in answers.items() %}
+    <div class="review-item {% if data.is_correct %}correct{% else %}incorrect{% endif %}" style="margin-bottom:16px;">
+      <div class="review-question" style="margin-bottom:12px;">
+        {% if data.is_correct %}✅{% else %}❌{% endif %}
+        &nbsp;<strong>Q{{ loop.index }}.</strong> {{ data.question }}
+      </div>
+
+      <!-- All options displayed -->
+      <div style="display:grid; gap:8px;">
+        {% for opt in data.options %}
+        {% if opt == data.correct %}
+        <div style="padding:8px 14px; border-radius:8px; font-size:0.85rem; background:rgba(46,213,115,0.12); border:1px solid rgba(46,213,115,0.3); color:var(--success);">
+        {% elif opt == data.selected and not data.is_correct %}
+        <div style="padding:8px 14px; border-radius:8px; font-size:0.85rem; background:rgba(255,78,106,0.10); border:1px solid rgba(255,78,106,0.3); color:var(--danger);">
+        {% else %}
+        <div style="padding:8px 14px; border-radius:8px; font-size:0.85rem; background:rgba(255,255,255,0.03); border:1px solid var(--border); color:var(--text-muted);">
+        {% endif %}
+          {% if opt == data.correct %}<strong>✓ Correct: </strong>{% elif opt == data.selected and not data.is_correct %}<strong>✗ Your answer: </strong>{% endif %}
+          {{ opt }}
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <div style="display:flex; gap:12px; margin-top:24px; flex-wrap:wrap;" class="fade-in no-print">
+    <a href="{{ url_for('quiz', quiz_id=quiz.id) }}" class="btn btn-primary" id="retake-btn">🔄 Retake Quiz</a>
+    <a href="{{ url_for('dashboard') }}" class="btn btn-secondary" id="dashboard-btn">🏠 Dashboard</a>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+@media print {
+  .no-print, .navbar, footer { display: none !important; }
+  body { background: #fff; color: #000; }
+  .card, .review-item { border: 1px solid #ccc; background: #fff !important; color: #000 !important; }
+  .score-value, .stat-val { color: #000 !important; }
+  * { box-shadow: none !important; text-shadow: none !important; }
+}
+</style>
+{% endblock %}
